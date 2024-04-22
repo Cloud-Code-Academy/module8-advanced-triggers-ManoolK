@@ -1,3 +1,4 @@
+[![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-718a45dd9cf7e7f842a935f5ebbe5719a5e09af4491e668f4dbf3b35d5cca122.svg)](https://classroom.github.com/online_ide?assignment_repo_id=14836785&assignment_repo_type=AssignmentRepo)
 # Developer Kickstart: Advanced Trigger Techniques
 
 This repository is an integral part of the Developer Kickstart curriculum at Cloud Code Academy. Designed specifically for budding Salesforce developers, this module delves deep into the realm of triggers, emphasizing advanced best practices, the utility of trigger helpers, and the integration of trigger frameworks.

@@ -28,19 +28,89 @@ Always ensure that your helper methods are bulk-safe to handle multiple records 
 */
 public with sharing class AccountHelper {
     
-    public void setTypeProspect(SObject objects){
-
+    /**
+     * Suvorova Oxana:
+     * I understand that I need to implement separate methods, but 
+     * I don't consider it optimal to apply a loop 3 times to update different fields at the same time.
+     * That's why I decided to implement private methods to practice separation of concerns.
+     * 
+     * @description Update the 'Type' field of the given Account records to 'Prospect' if it's not already set.
+     * Copy the shipping address of the Account to its billing address.
+     * Set the rating to 'Hot' if the Phone, Website, and Fax is not empty.
+     * @param accounts The list of new inserted Accounts
+     */
+    public static void setInitialFieldsValues(List<Account> accounts){
+        for (Account acc : accounts) {
+            // Update the 'Type' field of the given Account records to 'Prospect' if it's not already set.
+            setTypeProspect(acc);
+            // Copy the shipping address of the Account to its billing address.
+            addressCopy(acc);
+            // Set the rating to 'Hot' if the Phone, Website, and Fax is not empty.
+            setRating(acc);
+        }
     }
 
-    void addressCopy(){
-
+    /**
+    * @description Update the 'Type' field of the given Account records to 'Prospect' if it's not already set.
+    * @param account The Account to update
+    */
+    private static void setTypeProspect(Account account){
+        if (account.Type == null) {
+            account.Type = 'Prospect';
+        }
     }
 
-    //[public | private ] [static] data_type setRating (input parameters) {
-    //  The body of the method
-    //}
+    /**
+    * @description Copy the shipping address of the Account to its billing address. 
+    * @param account The Account to update
+    */
+    private static void addressCopy(Account account){
+        if (account.ShippingStreet != null) {
+            account.BillingStreet = account.ShippingStreet;
+        }
 
-    //[public | private ] [static] data_type defaultContact (input parameters) {
-    //  The body of the method
-    //}
+        if (account.ShippingCity != null) {
+            account.BillingCity = account.ShippingCity;
+        }
+
+        if (account.ShippingState != null) {
+            account.BillingState = account.ShippingState;
+        }
+
+        if (account.ShippingPostalCode != null) {
+            account.BillingPostalCode = account.ShippingPostalCode;
+        }
+
+        if (account.ShippingCountry != null) {
+            account.BillingCountry = account.ShippingCountry;
+        }
+    }
+
+    /**
+    * @description Set the rating to 'Hot' if the Phone, Website, and Fax is not empty. 
+    * @param account The Account to update
+    */
+    private static void setRating(Account account) {
+        if (account.Phone != null && account.Website != null && account.Fax != null) {
+            account.Rating = 'Hot';
+        }
+    }
+
+    /**
+    * @description Create a contact related to the account with the following default values:
+    * LastName = 'DefaultContact'
+    * Email = 'default@email.com' 
+    * @param accounts The list of new inserted Accounts
+    */
+    public static void defaultContact(List<Account> accounts) {
+        List<Contact> contacts = new List<Contact>();   
+        for(Account acc : accounts) {
+            Contact con = new Contact();
+            con.LastName = 'DefaultContact';
+            con.Email = 'default@email.com';
+            con.AccountId = acc.Id;
+            contacts.add(con);
+        }
+        Database.insert(contacts);
+    }
 }

@@ -103,7 +103,7 @@ public with sharing class AccountHelper {
     * @param accounts The list of new inserted Accounts
     */
     public static void defaultContact(List<Account> accounts) {
-        List<Contact> contacts = new List<Contact>();   
+        List<Contact> contacts = new List<Contact>(); 
         for(Account acc : accounts) {
             Contact con = new Contact();
             con.LastName = 'DefaultContact';
@@ -111,6 +111,10 @@ public with sharing class AccountHelper {
             con.AccountId = acc.Id;
             contacts.add(con);
         }
-        Database.insert(contacts);
+        // To be able to save duplicate records (as we use the same name and email) we need to change the DML options
+        Database.DMLOptions dml = new Database.DMLOptions();
+        dml.DuplicateRuleHeader.AllowSave = true;
+        dml.DuplicateRuleHeader.RunAsCurrentUser = true;
+        Database.insert(contacts, dml);
     }
 }

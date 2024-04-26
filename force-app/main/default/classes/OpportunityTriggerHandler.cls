@@ -30,7 +30,7 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler {
     **/
     public override void beforeUpdate() {
         // Get Accounts by Id with a Contact which Title = 'CEO'
-        Map<Id, Account> accountsById = getAccountsWithPrimaryContact(this.newOppsById.keySet(), 'CEO');
+        Map<Id, Account> accountsById = OpportunityHelper.getAccountsWithPrimaryContact(this.newOppsById.keySet(), 'CEO');
         
         for (Opportunity oppty : this.newOppsById.values()) {
             // When an opportunity is updated validate that the amount is greater than 5000.
@@ -83,18 +83,7 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler {
     **/
     public override void afterInsert() {
         // Create a new Task for newly inserted Opportunities
-        List<Task> tasksToCreate = new List<Task>();
-        Date activityDate = Date.today().addDays(3);
-        for (Opportunity opp : this.newOpps) {
-            Task tsk = new Task();
-            tsk.Subject = 'Call Primary Contact';
-            tsk.WhatId = opp.Id;
-            tsk.WhoId = opp.Primary_Contact__c;
-            tsk.OwnerId = opp.OwnerId;
-            tsk.ActivityDate = activityDate;
-            tasksToCreate.add(tsk);
-        }
-        Database.insert(tasksToCreate);
+        OpportunityHelper.createTaskForOpportunities(this.newOpps, 'Call Primary Contact');
     }
 
     /**
@@ -102,7 +91,7 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler {
     **/
     public override void afterDelete() {
         // Send email notifications when an Opportunity is deleted
-        notifyOwnersOpportunityDeleted(this.oldOppsById);
+        OpportunityHelper.notifyOwnersOpportunityDeleted(this.oldOppsById);
     }
 
     /**
@@ -110,72 +99,6 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler {
     **/
     public override void afterUndelete() {
         // Assign the primary contact to undeleted Opportunities
-        assignPrimaryContact(this.newOppsById);
-    }
-
-    /**
-    * notifyOwnersOpportunityDeleted:
-    * @description Sends an email notification to the owner of the Opportunity when it gets deleted.
-    * Uses Salesforce's Messaging.SingleEmailMessage to send the email.
-    * @param oldOpps The Map of deleted Opportunities by their Id
-    **/
-    private static void notifyOwnersOpportunityDeleted(Map<Id, Opportunity> oldOpps) {
-        Map<Id, User> userById = new Map<Id, User>([
-            SELECT Id, Email 
-            FROM User 
-            WHERE Id IN (SELECT OwnerId 
-                        FROM Opportunity
-                        WHERE Id IN :oldOpps.keySet())
-            ALL ROWS
-        ]);
-        List<Messaging.SingleEmailMessage> mails = new List<Messaging.SingleEmailMessage>();
-        for (Opportunity opp : oldOpps.values()){
-            Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
-            mail.setToAddresses(new String[]{userById.get(opp.OwnerId).Email});
-            mail.setSubject('Opportunity Deleted : ' + opp.Name);
-            mail.setPlainTextBody('Your Opportunity: ' + opp.Name +' has been deleted.');
-            mails.add(mail);
-        }        
-        
-        try {
-            Messaging.sendEmail(mails);
-        } catch (Exception ex){
-            System.debug('Exception: ' + ex.getMessage());
-        }
-    }
-
-    /**
-    * assignPrimaryContact:
-    * @description Assigns a primary contact with the title of 'VP Sales' to undeleted Opportunities.
-    * Only updates the Opportunities that don't already have a primary contact.
-    * @param oppNewMap The Map of undeleted Opportunities by their Id
-    */
-    private static void assignPrimaryContact(Map<Id,Opportunity> oppNewMap) {
-        // Get Accounts by Id with a Contact which Title = 'VP Sales'
-        Map<Id, Account> accountsById = getAccountsWithPrimaryContact(oppNewMap.keySet(), 'VP Sales');
-        
-        List<Opportunity> oppsToUpdate = new List<Opportunity>();
-        for (Opportunity opp : oppNewMap.values()){            
-            if (accountsById.containsKey(opp.AccountId) && opp.Primary_Contact__c == null){
-                Opportunity oppToUpdate = new Opportunity(Id = opp.Id);
-                oppToUpdate.Primary_Contact__c = accountsById.get(opp.AccountId)?.Contacts[0].Id;
-                oppsToUpdate.add(oppToUpdate);
-            }
-        }
-        Database.update(oppsToUpdate);
-    }
-
-    /**
-    * @description Get Accounts for Opportunities by Account Id with a Primary Contact by Title
-    * @param oppIds The Set of Opportunity Ids
-    * @param contactTitle The title of the primary contact
-    **/
-    private static Map<Id, Account> getAccountsWithPrimaryContact(Set<Id> oppIds, String contactTitle) {
-        Map<Id, Account> accountsById = new Map<Id, Account>([
-            SELECT Id, (SELECT Id FROM Contacts WHERE Title = :contactTitle LIMIT 1)
-            FROM Account 
-            WHERE Id IN (SELECT AccountId FROM Opportunity WHERE ID IN :oppIds)
-        ]);
-        return accountsById;
+        OpportunityHelper.assignPrimaryContact(this.newOppsById);
     }
 }

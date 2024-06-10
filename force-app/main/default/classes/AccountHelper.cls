@@ -65,25 +65,11 @@ public with sharing class AccountHelper {
     * @param account The Account to update
     */
     private static void addressCopy(Account account){
-        if (account.ShippingStreet != null) {
-            account.BillingStreet = account.ShippingStreet;
-        }
-
-        if (account.ShippingCity != null) {
-            account.BillingCity = account.ShippingCity;
-        }
-
-        if (account.ShippingState != null) {
-            account.BillingState = account.ShippingState;
-        }
-
-        if (account.ShippingPostalCode != null) {
-            account.BillingPostalCode = account.ShippingPostalCode;
-        }
-
-        if (account.ShippingCountry != null) {
-            account.BillingCountry = account.ShippingCountry;
-        }
+        account.BillingStreet = account.ShippingStreet ?? '';
+        account.BillingCity = account.ShippingCity ?? '';
+        account.BillingState = account.ShippingState ?? '';
+        account.BillingPostalCode = account.ShippingPostalCode ?? '';
+        account.BillingCountry = account.ShippingCountry ?? '';
     }
 
     /**
@@ -103,11 +89,13 @@ public with sharing class AccountHelper {
     * @param accounts The list of new inserted Accounts
     */
     public static void defaultContact(List<Account> accounts) {
+        String defaultLastName = 'DefaultContact';
+        String defaultEmail = 'default@email.com';
         List<Contact> contacts = new List<Contact>(); 
         for(Account acc : accounts) {
             Contact con = new Contact();
-            con.LastName = 'DefaultContact';
-            con.Email = 'default@email.com';
+            con.LastName = defaultLastName;
+            con.Email = defaultEmail;
             con.AccountId = acc.Id;
             contacts.add(con);
         }

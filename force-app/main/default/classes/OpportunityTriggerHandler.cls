@@ -83,7 +83,7 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler {
     **/
     public override void afterInsert() {
         // Create a new Task for newly inserted Opportunities
-        OpportunityHelper.createTaskForOpportunities(this.newOpps, 'Call Primary Contact');
+        OpportunityHelper.createTaskForOpportunities(this.newOpps, 'Call Primary Contact', 3);
     }
 
     /**

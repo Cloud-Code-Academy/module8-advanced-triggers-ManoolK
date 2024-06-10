@@ -9,7 +9,7 @@ public with sharing class OpportunityHelper {
         Map<Id, Account> accountsById = new Map<Id, Account>([
             SELECT Id, (SELECT Id FROM Contacts WHERE Title = :contactTitle LIMIT 1)
             FROM Account 
-            WHERE Id IN (SELECT AccountId FROM Opportunity WHERE ID IN :oppIds)
+            WHERE Id IN (SELECT AccountId FROM Opportunity WHERE Id IN :oppIds)
         ]);
         return accountsById;
     }
@@ -18,10 +18,11 @@ public with sharing class OpportunityHelper {
     * @description Create a new Task for Opportunities with provided subject
     * @param oppList The List of Opportunities
     * @param subject The subject of new Task
+    * @param daysFromToday Number of day from today for task activity
     **/
-    public static void createTaskForOpportunities(List<Opportunity> oppList, String subject) {
+    public static void createTaskForOpportunities(List<Opportunity> oppList, String subject, Integer daysFromToday) {
         List<Task> tasksToCreate = new List<Task>();
-        Date activityDate = Date.today().addDays(3);
+        Date activityDate = Date.today().addDays(daysFromToday);
         for (Opportunity opp : oppList) {
             Task tsk = new Task();
             tsk.Subject = subject;
@@ -41,6 +42,9 @@ public with sharing class OpportunityHelper {
     * @param oldOpps The Map of deleted Opportunities by their Id
     **/
     public static void notifyOwnersOpportunityDeleted(Map<Id, Opportunity> oldOpps) {
+        if (oldOpps.isEmpty()) {
+            throw new IllegalArgumentException('The Map of deleted Opportunities cannot be null or empty');
+        }
         Map<Id, User> userById = new Map<Id, User>([
             SELECT Id, Email 
             FROM User 
